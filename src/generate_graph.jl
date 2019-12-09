@@ -11,19 +11,27 @@ price = df.price[:]; price[price .> 250] .= 250
 
 X = hcat(longitude, latitude)
 
-scatter_gplot(X; marker = price, ms = 3)
+# scatter_gplot(X; marker = price, ms = 3)
 
 N = size(X,1)
-dist = zeros(N,N); for i = 1:N-1, j = i+1:N; dist[i,j] = norm(X[i,:] - X[j,:]); end; dist = dist + dist';
+# dist = zeros(N,N); for i = 1:N-1, j = i+1:N; dist[i,j] = norm(X[i,:] - X[j,:]); end; dist = dist + dist';
 
 tess = DelaunayTessellation()
-a = Point2D[Point(X[i,1], X[i,2]) for i in 1:N]
+a = Point2D[Point(X[i,1] - 102, X[i,2]) for i in 1:N]
 push!(tess, a)
+
+h = Dict(); for i in 1:N; h[X[i,:]] = i; end
+
+# x, y = getplotxy(delaunayedges(tess))
+# plot(x,y,linestyle=:auto, aspect_ratio = 1, legend = false)
 
 G = Graph(N)
 for edge in delaunayedges(tess)
-    add_edge!(G,Edge(geta(edge),getb(edge)))
+    idx1 = h[[getx(geta(edge))+102, gety(geta(edge))]]
+    idx2 = h[[getx(getb(edge))+102, gety(getb(edge))]]
+    add_edge!(G,Edge(idx1,idx2))
 end
+savegraph(G, "dataset\\delunary_singapore_graph.lgz")
 
 # ## build k-nearest neighbor graph, k = 3,5
 # G = Graph(N)
@@ -33,6 +41,6 @@ end
 #         add_edge!(G,Edge(v,nb))
 #     end
 # end
-#
-# gplot(1.0 .* adjacency_matrix(G), X; width = 1); plt = plot!(aspect_ratio = 1)
-# # savefig(plt, "figs\\3-NN-graph.png")
+
+gplot(1.0 .* adjacency_matrix(G), X; width = 1); plt = plot!(aspect_ratio = 1)
+savefig(plt, "figs\\delaunay_graph.png")
